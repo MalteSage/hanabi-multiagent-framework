@@ -309,7 +309,7 @@ class HanabiParallelSession:
                 # add observation to agent
                 agent.add_experience(
                     self.last_observations[agent_id],
-                    self.last_actions[agent_id],
+                    self.last_actions[agent_id].reshape(-1, 1),
                     shaped_rewards,
                     obs,
                     is_last_step.reshape(-1, 1))
