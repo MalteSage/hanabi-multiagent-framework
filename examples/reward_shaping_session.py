@@ -199,7 +199,7 @@ def session(
             self_play: bool = True,
             output_dir = "/output",
             start_with_weights=None,
-            n_backup = 500, 
+            n_backup = 5, 
             restore_weights = None
     ):
     
@@ -344,19 +344,8 @@ def session(
         #np.save(output_path + "_drawn_tds.npy", drawn_td)
         
 
-
         epochs_alive += 5
         print(epochs_alive)
-
-
-
-
-
-
-
-
-
-
 
 
         if (epoch +1) % 50 == 0:
