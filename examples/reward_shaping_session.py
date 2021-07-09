@@ -199,7 +199,7 @@ def session(
             self_play: bool = True,
             output_dir = "/output",
             start_with_weights=None,
-            n_backup = 5, 
+            n_backup = 100, 
             restore_weights = None
     ):
     
@@ -267,14 +267,19 @@ def session(
                 logger.info("Agent Config " + str(i) + " \n" + str(agent))
                 logger.info("Reward Shaper Config\n" + str(agent.reward_shaper))
                 agents.append(agent)
-                
+
+    print(agent[0].buffersize, agent[0].alpha, agent[0].lr)
+    alive_count = None       
     # load previous weights            
     if start_with_weights is not None:
         print(start_with_weights)
         for aid, agent in enumerate(agents):
             if "agent_" + str(aid) in start_with_weights:
-                agent.restore_weights(*(start_with_weights["agent_" + str(aid)]))
-    
+                alive_count = agent.restore_weights(*(start_with_weights["agent_" + str(aid)]))
+
+    print(agent[0].buffersize, agent[0].alpha, agent[0].lr)
+
+
     # start parallel session for training and evaluation          
     parallel_session = hmf.HanabiParallelSession(env, agents)
     parallel_session.reset()
@@ -284,7 +289,10 @@ def session(
     
     population_size = int(agent_params.n_network) 
     pbt_epochs = pbt_params.life_span
-    epochs_alive = np.ones(population_size) + pbt_params.life_span
+    if alive_count is None:
+        epochs_alive = np.ones(population_size) + pbt_params.life_span
+    else:
+        epochs_alive = alive_count
 
     # evaluate the performance before training
     mean_reward_prev = np.zeros((agent_params.n_network, pbt_params.n_mean))
@@ -369,7 +377,8 @@ def session(
                 agents[0].save_weights(
                     os.path.join(output_dir, "weights", "agent_0"), 
                     "ckpt_" + str(agents[0].train_step),
-                    only_weights=only_weights)
+                    only_weights=only_weights,
+                    epochs_alive)
                 
             else:
                 for aid, agent in enumerate(agents):
@@ -394,7 +403,7 @@ def session(
 
 
         #perform PBT
-        if epoch % pbt_params.generations <= 4 and epoch > 0:
+        if epoch + 1 % pbt_params.generations == 0 and epoch > 0:
             
             print('>>>>>>>>>>>>>>>>>>>>>>. PBT <<<<<<<<<<<<<<<<<<<<')
 
